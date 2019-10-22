@@ -86,6 +86,9 @@ def animate(i, xs, ys):
     global COUNTER_FRAMES_MOUTH
     global t_end
     global ear
+    global SHOW_POINTS_FACE
+    global SHOW_CONVEX_HULL_FACE
+    global SHOW_INFO
 
     ret, frame = videoSteam.read()
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -174,6 +177,15 @@ def animate(i, xs, ys):
             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
 
     print("Calling animate")
+
+    key = cv2.waitKey(1) & 0xFF
+
+    if key == ord('p'):
+        SHOW_POINTS_FACE = not SHOW_POINTS_FACE
+    if key == ord('c'):
+        SHOW_CONVEX_HULL_FACE = not SHOW_CONVEX_HULL_FACE
+    if key == ord('i'):
+        SHOW_INFO = not SHOW_INFO
 
     # Read temperature (Celsius) from TMP102
     temp_c = ear
