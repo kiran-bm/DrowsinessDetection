@@ -183,12 +183,15 @@ def animate(i, xs, ys):
     ys.append(temp_c)
 
     # Limit x and y lists to 20 items
-    xs = xs[-500:]
-    ys = ys[-500:]
+    xs = xs[-40:]
+    ys = ys[-40:]
 
     # Draw x and y lists
     ax.clear()
     ax.plot(xs, ys)
+
+    ax.grid(axis="x", color="green", alpha=.3, linewidth=2, linestyle=":")
+    ax.grid(axis="y", color="black", alpha=.5, linewidth=.5)
 
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
@@ -197,8 +200,8 @@ def animate(i, xs, ys):
     # Format plot
     plt.xticks(rotation=60, ha='right')
     plt.subplots_adjust(bottom=0.30)
-    plt.title('TMP102 Temperature over Time')
-    plt.ylabel('Temperature (deg C)')
+    plt.title('EAR Value over time')
+    plt.ylabel('EAR')
 
     xs.append(datetime.datetime.now().strftime('%H:%M:%S.%f'))
     ys.append(ear)
