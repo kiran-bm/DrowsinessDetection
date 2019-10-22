@@ -34,6 +34,7 @@ fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 xs = []
 ys = []
+ys_2 = []
 
 years = mdates.YearLocator()   # every year
 months = mdates.MonthLocator()  # every month
@@ -78,7 +79,7 @@ dist_coeffs = np.zeros((4,1))
 
 t_end = time.time()
 
-def animate(i, xs, ys):
+def animate(i, xs, ys, ys_2):
 
     global COUNTER_BLINK
     global COUNTER_MOUTH
@@ -193,14 +194,17 @@ def animate(i, xs, ys):
     # Add x and y to lists
     xs.append(datetime.datetime.now().strftime('%H:%M:%S.%f'))
     ys.append(temp_c)
+    ys_2.append(1 if COUNTER_FRAMES_EYE > 0 else 0)
 
     # Limit x and y lists to 20 items
     xs = xs[-40:]
     ys = ys[-40:]
+    ys_2 = ys_2[-40:]
 
     # Draw x and y lists
     ax.clear()
     ax.plot(xs, ys)
+    ax.plot(xs, ys_2)
 
     ax.grid(axis="x", color="green", alpha=.3, linewidth=2, linestyle=":")
     ax.grid(axis="y", color="black", alpha=.5, linewidth=.5)
@@ -220,7 +224,7 @@ def animate(i, xs, ys):
 
     cv2.imshow("Output",frame)
 
-ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), interval=20)
+ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys, ys_2), interval=20)
 plt.show()
 '''
 while(True):
