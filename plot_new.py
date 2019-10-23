@@ -44,17 +44,19 @@ ax = fig.add_subplot(1, 1, 1)
 xs = []
 ys = []
 shared = sharedmem.empty(ARRAY_SIZE)
-shared[:] = np.random.rand(1, ARRAY_SIZE)[0]
+#shared[:] = np.random.rand(1, ARRAY_SIZE)[0]
 print(shared)
+
+sharedX = sharedmem.empty(ARRAY_SIZE)
 
 def initXs():
 	i = 1
 	while True:
-		xs.append(i)
+		sharedX[i-1] = i
 		i+=1
-		if i >= ARRAY_SIZE:
+		if i > ARRAY_SIZE:
 			break
-	print(xs)
+	print("Shared X", sharedX)
 
 def eye_aspect_ratio(eye):
     A = dist.euclidean(eye[1], eye[5])
@@ -104,6 +106,7 @@ def plot(i, xs, ys):
 
 	global result
 	global shared
+	global sharedX
 	
 	try:
 		result=q.get()
@@ -112,7 +115,7 @@ def plot(i, xs, ys):
 	
 	ear = result
 	
-	print("{EAR} : ", ear)
+	#print("{EAR} : ", ear)
 	
 	# Read temperature (Celsius) from TMP102
 	temp_c = ear
@@ -125,10 +128,11 @@ def plot(i, xs, ys):
 	xs = xs[-ARRAY_SIZE:]
 	ys = ys[-ARRAY_SIZE:]
 	shared = shared[-ARRAY_SIZE:]
+	sharedX = sharedX[-ARRAY_SIZE:]
 
     # Draw x and y lists
 	ax.clear()
-	ax.plot(xs, shared)
+	ax.plot(sharedX, shared)
 
 	ax.grid(axis="x", color="green", alpha=.3, linewidth=2, linestyle=":")
 	ax.grid(axis="y", color="black", alpha=.5, linewidth=.5)
@@ -143,6 +147,7 @@ def plot(i, xs, ys):
 	plt.title('EAR Value over time')
 	plt.ylabel('EAR')
 
+Frames = 0
 
 def simulation(q, ys):
 
@@ -158,10 +163,14 @@ def simulation(q, ys):
 		global SHOW_CONVEX_HULL_FACE
 		global SHOW_INFO
 		global shared
+		global sharedX
+		global Frames
 
 		ret, frame = videoSteam.read()
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		rects = detector(gray, 0)
+
+		Frames += 1
 
 		for rect in rects:
 			shape = predictor(gray, rect)
@@ -249,13 +258,26 @@ def simulation(q, ys):
 
 		q.put(ear)
 		#shift(shared, -1, cval=ear)
-		n =[]
-		n[:] = shared[:]
-		n = n[-(ARRAY_SIZE - 1):]
-		n.append(ear)
-		shared[:]=n[:]
+		
+		if Frames > ARRAY_SIZE:
+			n =[]
+			n[:] = shared[:]
+			n = n[-(ARRAY_SIZE - 1):]
+			n.append(ear)
+			shared[:]=n[:]
+
+		
+			m =[]
+			m[:] = sharedX[:]
+			m = m[-(ARRAY_SIZE - 1):]
+			m.append(Frames)
+			sharedX[:]=m[:]
+		
 		#shift(n, -1, cval=ear)
-		print("Shared shifted", shared)
+			#print("Shared shifted", sharedX)
+			
+		else:
+			shared[Frames - 1] = ear
 
 		cv2.imshow("Output",frame)
 		key = cv2.waitKey(1) & 0xFF
