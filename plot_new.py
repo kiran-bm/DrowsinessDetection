@@ -16,8 +16,10 @@ import matplotlib.dates as mdates
 import multiprocessing
 from threading import Timer
 import random
+from numpy import ndarray
 
 import sharedmem
+from scipy.ndimage.interpolation import shift
 
 EYE_AR_THRESH = 0.3
 EYE_AR_CONSEC_FRAMES = 7
@@ -26,6 +28,8 @@ MOUTH_AR_THRESH = 0.4
 SHOW_POINTS_FACE = False
 SHOW_CONVEX_HULL_FACE = False
 SHOW_INFO = False
+
+ARRAY_SIZE = 200
 
 ear = 0
 mar = 0
@@ -39,9 +43,18 @@ fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 xs = []
 ys = []
-shared = sharedmem.empty(40)
+shared = sharedmem.empty(ARRAY_SIZE)
+shared[:] = np.random.rand(1, ARRAY_SIZE)[0]
 print(shared)
 
+def initXs():
+	i = 1
+	while True:
+		xs.append(i)
+		i+=1
+		if i >= ARRAY_SIZE:
+			break
+	print(xs)
 
 def eye_aspect_ratio(eye):
     A = dist.euclidean(eye[1], eye[5])
@@ -109,13 +122,13 @@ def plot(i, xs, ys):
 	ys.append(temp_c)
 
     # Limit x and y lists to 20 items
-	xs = xs[-40:]
-	ys = ys[-40:]
-	#shared = shared[-40:]
+	xs = xs[-ARRAY_SIZE:]
+	ys = ys[-ARRAY_SIZE:]
+	shared = shared[-ARRAY_SIZE:]
 
     # Draw x and y lists
 	ax.clear()
-	ax.plot(xs, ys)
+	ax.plot(xs, shared)
 
 	ax.grid(axis="x", color="green", alpha=.3, linewidth=2, linestyle=":")
 	ax.grid(axis="y", color="black", alpha=.5, linewidth=.5)
@@ -131,7 +144,7 @@ def plot(i, xs, ys):
 	plt.ylabel('EAR')
 
 
-def simulation(q):
+def simulation(q, ys):
 
 	while True:
 
@@ -235,6 +248,14 @@ def simulation(q):
 		key = cv2.waitKey(1) & 0xFF
 
 		q.put(ear)
+		#shift(shared, -1, cval=ear)
+		n =[]
+		n[:] = shared[:]
+		n = n[-(ARRAY_SIZE - 1):]
+		n.append(ear)
+		shared[:]=n[:]
+		#shift(n, -1, cval=ear)
+		print("Shared shifted", shared)
 
 		cv2.imshow("Output",frame)
 		key = cv2.waitKey(1) & 0xFF
@@ -243,7 +264,9 @@ def main():
 	#ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), interval=20)
 	#plt.show()
 	
-	simulate=multiprocessing.Process(None,simulation,args=(q,))
+	initXs()
+	
+	simulate=multiprocessing.Process(None,simulation,args=(q,xs))
 	simulate.start()
 
 	ani = animation.FuncAnimation(fig, plot, fargs=(xs, ys), interval=20)
